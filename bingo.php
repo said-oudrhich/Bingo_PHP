@@ -22,28 +22,46 @@ function comprobar($num, $carton)
 }
 
 /**
- * Modifica un cartón para añadir dos espacios vacíos (null) en cada fila.
+ * Modifica un cartón para dejar exactamente 5 números por fila.
  * La función modifica el cartón directamente (paso por referencia).
  *
  * @param array &$carton El cartón a modificar.
  */
 function borrarEspacios(&$carton)
 {
-    // Recorre cada fila del cartón por su índice.
-    for ($i = 0; $i < count($carton); $i++) {
-        // Genera dos índices de columna aleatorios y distintos entre 0 y 6.
-        $numAl1 = random_int(0, 6);
-        $numAl2 = random_int(0, 6);
-        while ($numAl1 == $numAl2) {
-            $numAl2 = random_int(0, 6);
+    foreach ($carton as &$fila) {
+        // Contamos cuántos números hay en la fila (sin contar nulls)
+        $numerosEnFila = count(array_filter($fila, function ($val) {
+            return $val !== null;
+        }));
+
+        // Calculamos cuántos espacios debemos borrar para dejar exactamente 5
+        $espaciosABorrar = $numerosEnFila - 5;
+
+        if ($espaciosABorrar <= 0) {
+            continue; // Ya tiene 5 o menos números
         }
-        // Recorre cada columna de la fila actual.
-        for ($j = 0; $j < count($carton[$i]); $j++) {
-            // Si el índice de la columna coincide con uno de los números aleatorios,
-            // se establece el valor de esa celda a null para crear un espacio vacío.
-            if ($j == $numAl1 || $j == $numAl2) {
-                $carton[$i][$j] = null;
+
+        // Columnas candidatas a ser borradas
+        $indicesDisponibles = [];
+        for ($col = 0; $col < count($fila); $col++) {
+            // Solo podemos borrar si hay un número (no es null)
+            if ($fila[$col] !== null) {
+                // Si es la columna 6 (última) y tiene el 60, NO se puede borrar
+                if ($col === 6 && $fila[$col] === 60) {
+                    continue;
+                }
+                $indicesDisponibles[] = $col;
             }
+        }
+
+        // Elegimos aleatoriamente los espacios a borrar
+        shuffle($indicesDisponibles);
+        $indicesBorrar = array_slice($indicesDisponibles, 0, $espaciosABorrar);
+
+        // Borramos las celdas seleccionadas
+        foreach ($indicesBorrar as $col) {
+            $fila[$col] = null;
         }
     }
 }
