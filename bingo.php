@@ -55,35 +55,32 @@ function borrarEspacios(&$carton)
  */
 function crearCarton()
 {
-    $carton = array();
-    // Bucle para las 3 filas del cartón.
+    $carton = [];
+
+    // Elegimos aleatoriamente en qué fila irá el 60
+    $fila60 = random_int(0, 2);
+
     for ($i = 0; $i < 3; $i++) {
-        $carton[$i] = array();
-        // Bucle para las 7 columnas del cartón.
+        $carton[$i] = [];
+
         for ($j = 0; $j < 7; $j++) {
-            // Bucle para asegurar que se genere un número único para la celda.
+
+            // Última columna
+            if ($j == 6) {
+                $carton[$i][$j] = ($i == $fila60) ? 60 : null;
+                continue;
+            }
+
+            // Generar números aleatorios para las columnas 0-5
             while (empty($carton[$i][$j])) {
-                // Genera un número aleatorio basado en la columna.
-                // Col 0: 1-9, Col 1: 10-19, Col 2: 20-29, etc.
-                $min = ($j * 10) + 1;
-                $max = ($j + 1) * 10;
-                // Ajustado para que el máximo sea 60, según las reglas.
-                $min = ($j * 9) + 1;  // Distribuimos los 60 números en 7 columnas
+                $min = ($j * 9) + 1;
                 $max = ($j + 1) * 9;
-                if ($j == 6) { // La última columna llega hasta 60
-                    $max = 60;
-                }
                 $num = random_int($min, $max);
-                // Comprueba que el número no esté ya en el cartón.
-                // Comprueba que el número no esté ya en el cartón y sea <= 60.
-                if (comprobar($num, $carton)) {
-                    // Si es único, lo asigna a la celda.
-                    $carton[$i][$j] = $num;
-                }
+                if (comprobar($num, $carton)) $carton[$i][$j] = $num;
             }
         }
     }
-    // Añade los espacios vacíos al cartón recién creado.
+
     borrarEspacios($carton);
     return $carton;
 }
