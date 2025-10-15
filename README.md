@@ -1,46 +1,155 @@
-# Bingo PHP
+# Juego de Bingo en PHP
 
-## ¿En qué consiste?
-Juego simple de Bingo en PHP. Genera cartones para varios jugadores, va sacando números al azar (1..60) sin repetir, marca en rojo los números que ya salieron y detecta automáticamente cuándo un jugador completa su cartón (Bingo).
+Un juego de bingo completo desarrollado en PHP que simula una partida con múltiples jugadores y cartones.
 
-## Estructura
-- `index.php`: Punto de entrada y flujo de la partida. Gestiona la sesión, el sorteo, el reinicio y el renderizado de la interfaz.
-- `bingo.php`: Funciones puras de lógica y visualización de cartones:
-  - `crearCarton()`
-  - `borrarEspacios(&$carton)`
-  - `comprobar($num, $carton)`
-  - `crearTabla($carton, $numerosSacados)`
-  - `cartonCompleto($carton, $numerosSacados)`
-- `img/`: Imágenes 1..60 en formato `.PNG` para mostrar la tira de números salidos.
+## Descripción
 
-## Cómo funciona
-1. Al cargar `index.php`, se inicializan:
-   - `$_SESSION['listaJugadores']`: Matriz de jugadores → cartones.
-   - `$_SESSION['numerosSacados']`: Lista de números ya sorteados.
-2. Cada petición con el botón “Sacar número nuevo” añade un número aleatorio (1..60) no repetido a `$_SESSION['numerosSacados']`.
-3. Se recalcula si algún cartón está completo con `cartonCompleto(...)`. Si hay ganador:
-   - Se desactiva el botón de sorteo y se muestra el ganador.
-4. Los cartones se dibujan con `crearTabla(...)`, marcando en rojo los números que ya salieron.
+Este proyecto implementa un juego de bingo tradicional donde 4 jugadores compiten con 3 cartones cada uno. El sistema sortea números del 1 al 60 y marca automáticamente los cartones hasta que un jugador complete todos los números de al menos uno de sus cartones.
 
-## Reglas del cartón
-- Tamaño: 3 filas x 7 columnas.
-- Columnas 0..5: números en bloques de 9 (1..9, 10..18, ..., 46..54), sin repetidos en el cartón.
-- Columna 6: una sola celda contiene el número 60; las demás celdas de esa columna pueden quedar vacías (null).
-- `borrarEspacios(...)` elimina 2 celdas por fila (o hasta dejar 5 números en total), sin borrar el 60 si está presente.
+## Estructura del Proyecto
 
-## Flujo de sesión (estado)
-- `$_SESSION['listaJugadores']`: Se crea una vez y persiste hasta “Reiniciar partida”.
-- `$_SESSION['numerosSacados']`: Se actualiza cada vez que se sortea un número y se usa para pintar los cartones.
-- “Reiniciar partida” limpia toda la sesión y recarga `index.php`.
+```text
+bingo/
+├── index.php              # Interfaz principal del juego
+├── funciones_carton.php   # Lógica de creación y manejo de cartones
+├── controlador_partida.php # Control del flujo del juego
+├── img/                   # Imágenes de números (1.PNG a 60.PNG)
+└── README.md             # Este archivo
+```
 
-## Cómo ejecutar
-1. Coloca el proyecto en tu servidor local (por ejemplo, `wamp/www/Bingo_PHP`).
-2. Accede a `http://localhost/Bingo_PHP/index.php`.
-3. Usa los botones superiores para sortear números o reiniciar.
+## Archivos Principales
 
-## Mini análisis y decisiones
-- Se priorizó claridad del flujo sobre estilos: HTML sencillo con estilos inline mínimos.
-- La lógica de sorteo se detiene en cuanto hay un ganador (botón deshabilitado) para evitar estados inconsistentes.
-- Los cartones se generan con rangos por columna para repartir la distribución y facilitar la lectura.
-- La columna final fuerza el 60 en una única fila, replicando la restricción vista en el ejercicio original.
-- La sesión se usa solo para lo necesario: lista de cartones y números salidos; todo lo demás se recalcula por petición.
+### 1. index.php
+
+**Propósito**: Interfaz de usuario y punto de entrada principal.
+
+**Funcionalidades**:
+
+- Inicia la sesión PHP para mantener el estado del juego
+- Configura los parámetros del juego (4 jugadores, 3 cartones cada uno)
+- Procesa las acciones del usuario (sacar número, reiniciar)
+- Muestra la interfaz HTML con los cartones y controles
+
+**Flujo de ejecución**:
+
+1. `session_start()` - Inicia/continúa la sesión
+2. Incluye los archivos de funciones
+3. Inicializa la partida si es necesaria
+4. Procesa acciones POST del usuario
+5. Obtiene datos actualizados del juego
+6. Renderiza la interfaz HTML
+
+### 2. funciones_carton.php
+
+**Propósito**: Manejo de cartones de bingo.
+
+**Funciones principales**:
+
+- `crearCarton()`: Genera un cartón de 3x7 con 15 números
+  - Columnas 1-6: números del 1-10, 11-20, ..., 51-60
+  - Columna 7: solo el número 60
+  - Elimina aleatoriamente números hasta dejar exactamente 15
+
+- `crearTabla($carton, $numerosSacados)`: Convierte cartón en HTML
+  - Marca en rojo los números ya sorteados
+  - Muestra "-" en casillas vacías
+
+- `cartonCompleto($carton, $numerosSacados)`: Verifica si hay bingo
+  - Comprueba que todos los números del cartón estén sorteados
+
+- `comprobar($num, $carton)`: Evita números duplicados
+- `borrarEspacios(&$carton)`: Elimina números para dejar 15
+
+### 3. controlador_partida.php
+
+**Propósito**: Lógica del flujo del juego.
+
+**Funciones principales**:
+
+- `inicializar_partida($jugadores, $cartones_por_jugador)`:
+  - Crea cartones para todos los jugadores si no existen
+  - Inicializa array de números sorteados
+
+- `procesar_acciones()`: Maneja formularios POST
+  - Botón "Sacar número nuevo" → `sacar_numero()`
+  - Botón "Reiniciar partida" → `reiniciar_partida()`
+
+- `sacar_numero()`: Sortea números del 1-60
+  - Evita repetir números ya sorteados
+  - No permite sortear si ya hay ganador
+
+- `obtener_ganador()`: Busca jugadores con bingo completo
+  - Recorre todos los cartones de todos los jugadores
+  - Retorna el número del primer ganador encontrado
+
+- `obtener_datos_juego()`: Recopila estado actual
+  - Lista de jugadores y cartones
+  - Números sorteados y último número
+  - Información del ganador
+
+## Conceptos PHP Utilizados
+
+### Sessions (Sesiones)
+
+```php
+session_start();
+$_SESSION['listaJugadores'] = $datos;
+```
+
+- **Propósito**: Mantener el estado del juego entre peticiones HTTP
+- **Datos almacenados**: Cartones de jugadores, números sorteados
+- **Ventaja**: El juego persiste al recargar la página
+
+### Includes/Requires
+
+```php
+require 'funciones_carton.php';
+require 'controlador_partida.php';
+```
+
+- **Propósito**: Modularizar el código en archivos separados
+- **Diferencia**: `require` detiene ejecución si falla, `include` solo advierte
+
+### Formularios POST
+
+```php
+if (isset($_POST['sacar_numero'])) {
+    // Procesar acción
+}
+```
+
+- **Propósito**: Capturar acciones del usuario (botones)
+- **Método POST**: Adecuado para acciones que modifican estado
+
+### Arrays Multidimensionales
+
+```php
+$lista_jugadores[1][0] = $carton; // Jugador 1, Cartón 0
+```
+
+- **Estructura**: `$jugadores[número_jugador][índice_cartón]`
+- **Uso**: Organizar cartones por jugador
+
+## Flujo del Juego
+
+1. **Inicio**: Usuario accede a `index.php`
+2. **Inicialización**: Se crean cartones si no existen en sesión
+3. **Interfaz**: Se muestra estado actual (cartones, números sorteados)
+4. **Acción**: Usuario hace clic en "Sacar número nuevo"
+5. **Procesamiento**: Se sortea número y actualiza estado
+6. **Verificación**: Se comprueba si hay ganador
+7. **Actualización**: Se recarga página con nuevo estado
+8. **Fin**: Cuando hay ganador, se deshabilita el sorteo
+
+## Requisitos
+
+- **PHP 7.0+**: Para sintaxis moderna (`<?= ?>`, `random_int()`)
+- **Servidor web**: Apache, Nginx, o servidor de desarrollo PHP
+- **Imágenes**: Archivos `1.PNG` a `60.PNG` en carpeta `img/`
+
+## Instalación
+
+1. Clonar/descargar archivos en directorio del servidor web
+2. Crear carpeta `img/` con imágenes de números (1.PNG a 60.PNG)
+3. Acceder a `index.php` desde navegador
+4. ¡Jugar!
