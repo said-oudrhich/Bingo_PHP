@@ -57,9 +57,13 @@ function crearCarton()
             $filaAleatoria = random_int(0, 2);
             $carton[$filaAleatoria][$col] = 60;
         } else {
-            // Columnas 0-5: rangos de 10 números cada una
-            $min = ($col * 10) + 1;
-            $max = ($col * 10) + 10;
+            // Columnas 0-5: rangos correctos
+            if ($col == 0) {
+                $min = 1; $max = 9;
+            } else {
+                $min = ($col * 10);
+                $max = ($col * 10) + 9;
+            }
             
             for ($fila = 0; $fila < 3; $fila++) {
                 do {
